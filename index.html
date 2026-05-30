@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asterfall: Echoes of Glass</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="game-shell" aria-label="Asterfall game shell">
+      <div id="game-root"></div>
+      <div id="hud-root"></div>
+      <noscript>This game needs JavaScript enabled.</noscript>
+    </main>
+
+    <div id="boot-error" role="alert" hidden>
+      Phaser could not load. Start the local server and make sure the CDN is reachable.
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

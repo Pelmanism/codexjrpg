@@ -1,0 +1,688 @@
+:root {
+  color-scheme: dark;
+  --ink: #f5f0dc;
+  --muted: #b8b19c;
+  --panel: rgba(19, 22, 25, 0.86);
+  --panel-heavy: rgba(12, 14, 17, 0.94);
+  --line: rgba(245, 240, 220, 0.16);
+  --gold: #d9b86f;
+  --rose: #d06d7f;
+  --aqua: #69c7c0;
+  --leaf: #82a96e;
+  --ember: #e17d4f;
+  --void: #111417;
+  --shadow: rgba(0, 0, 0, 0.38);
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(105, 199, 192, 0.12), transparent 28rem),
+    linear-gradient(135deg, #101419 0%, #171716 42%, #221820 100%);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  min-height: 2.35rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+button:hover {
+  border-color: rgba(217, 184, 111, 0.7);
+  background: rgba(217, 184, 111, 0.12);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+#game-shell {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0e1115;
+}
+
+#game-root {
+  position: absolute;
+  inset: 0;
+}
+
+#game-root canvas {
+  display: block;
+  margin: auto;
+  image-rendering: pixelated;
+}
+
+#hud-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+#hud-root button,
+#hud-root .interactive {
+  pointer-events: auto;
+}
+
+#boot-error {
+  position: fixed;
+  inset: auto 1rem 1rem 1rem;
+  z-index: 10;
+  padding: 1rem;
+  border: 1px solid rgba(208, 109, 127, 0.65);
+  border-radius: 8px;
+  background: rgba(33, 10, 16, 0.92);
+  color: #ffdfe5;
+}
+
+.title-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1rem;
+  padding: clamp(1rem, 4vw, 4rem);
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(7, 10, 14, 0.18), rgba(7, 10, 14, 0.72)),
+    repeating-linear-gradient(90deg, transparent 0 15px, rgba(255, 255, 255, 0.015) 15px 16px);
+}
+
+.title-mark {
+  width: min(820px, 96vw);
+  padding: 0;
+  text-shadow: 0 4px 26px rgba(0, 0, 0, 0.58);
+}
+
+.title-mark h1 {
+  margin: 0;
+  color: #fff8de;
+  font-size: clamp(2.25rem, 8vw, 6.75rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.92;
+}
+
+.title-mark p {
+  max-width: 48rem;
+  margin: 1rem auto 0;
+  color: var(--muted);
+  font-size: clamp(0.98rem, 2vw, 1.18rem);
+  line-height: 1.5;
+}
+
+.title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.title-actions button {
+  min-width: 11rem;
+  padding: 0.75rem 1rem;
+  background: rgba(12, 14, 17, 0.74);
+  box-shadow: 0 16px 40px var(--shadow);
+}
+
+.world-hud {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(17rem, 22rem) 1fr minmax(15rem, 19rem);
+  grid-template-rows: auto 1fr auto;
+  gap: 0.75rem;
+  padding: clamp(0.65rem, 1.5vw, 1rem);
+}
+
+.hud-panel,
+.dialogue-panel,
+.pause-panel,
+.battle-panel,
+.toast-stack > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 18px 46px var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.party-stack {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.member-card {
+  padding: 0.65rem;
+}
+
+.member-top,
+.objective-top,
+.log-row,
+.battle-row,
+.target-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.member-name {
+  color: #fff6d6;
+  font-weight: 800;
+}
+
+.member-role,
+.meta-text,
+.small-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.bar {
+  position: relative;
+  height: 0.52rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bar + .bar {
+  margin-top: 0.28rem;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--aqua);
+}
+
+.bar-fill.hp {
+  background: linear-gradient(90deg, #d45c68, #e5a257);
+}
+
+.bar-fill.ap {
+  background: linear-gradient(90deg, #4a95ce, #69c7c0);
+}
+
+.bar-fill.limit {
+  background: linear-gradient(90deg, #d9b86f, #fff1a8);
+}
+
+.objective-panel {
+  grid-column: 3;
+  grid-row: 1;
+  padding: 0.75rem;
+  align-self: start;
+}
+
+.objective-top strong,
+.journal-title {
+  color: #fff6d6;
+}
+
+.objective-text {
+  margin: 0.55rem 0 0;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.quick-actions {
+  grid-column: 3;
+  grid-row: 3;
+  align-self: end;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.quick-actions button,
+.battle-command-grid button,
+.target-list button,
+.menu-grid button {
+  padding: 0.5rem 0.65rem;
+}
+
+.feed-panel {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  padding: 0.65rem;
+  max-height: 9.4rem;
+  overflow: hidden;
+}
+
+.log-row {
+  align-items: flex-start;
+  padding: 0.28rem 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.prompt-chip {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: center;
+  align-self: end;
+  max-width: min(38rem, 90vw);
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(217, 184, 111, 0.34);
+  border-radius: 999px;
+  background: rgba(16, 19, 22, 0.75);
+  color: #fff4d2;
+  box-shadow: 0 12px 32px var(--shadow);
+}
+
+.dialogue-layer,
+.pause-layer,
+.battle-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.pause-layer {
+  place-items: center;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.dialogue-panel {
+  width: min(58rem, 96vw);
+  padding: 1rem;
+}
+
+.dialogue-name {
+  margin-bottom: 0.55rem;
+  color: var(--gold);
+  font-weight: 900;
+}
+
+.dialogue-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1rem, 2.2vw, 1.18rem);
+  line-height: 1.45;
+}
+
+.dialogue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.pause-panel {
+  width: min(52rem, 95vw);
+  max-height: min(78vh, 48rem);
+  overflow: auto;
+  padding: 1rem;
+}
+
+.pause-panel h2,
+.battle-title {
+  margin: 0 0 0.52rem;
+  color: #fff4cf;
+  font-size: 1.15rem;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.journal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.journal-entry {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.journal-entry p {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  line-height: 1.36;
+}
+
+.battle-layer {
+  place-items: stretch;
+  grid-template-rows: 1fr auto;
+  pointer-events: none;
+}
+
+.battle-layout {
+  align-self: end;
+  display: grid;
+  grid-template-columns: minmax(13rem, 17rem) minmax(14rem, 19rem) minmax(20rem, 29rem);
+  align-items: end;
+  justify-content: end;
+  gap: 0.55rem;
+  width: min(68rem, 100%);
+  pointer-events: auto;
+}
+
+.battle-panel {
+  min-height: 0;
+  max-height: 14.5rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 0.62rem;
+}
+
+.battle-panel,
+.battle-command-grid,
+.target-list,
+.battle-log,
+.pause-panel {
+  scrollbar-color: rgba(217, 184, 111, 0.75) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.battle-panel::-webkit-scrollbar,
+.battle-command-grid::-webkit-scrollbar,
+.target-list::-webkit-scrollbar,
+.battle-log::-webkit-scrollbar,
+.pause-panel::-webkit-scrollbar {
+  width: 0.55rem;
+}
+
+.battle-panel::-webkit-scrollbar-track,
+.battle-command-grid::-webkit-scrollbar-track,
+.target-list::-webkit-scrollbar-track,
+.battle-log::-webkit-scrollbar-track,
+.pause-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.battle-panel::-webkit-scrollbar-thumb,
+.battle-command-grid::-webkit-scrollbar-thumb,
+.target-list::-webkit-scrollbar-thumb,
+.battle-log::-webkit-scrollbar-thumb,
+.pause-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(217, 184, 111, 0.78);
+}
+
+.battle-roster {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.combatant-card {
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.combatant-card:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.battle-row {
+  padding: 0 0 0.28rem;
+}
+
+.battle-command-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.34rem;
+  max-height: 8.7rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
+}
+
+.battle-command-grid button {
+  min-height: 2.28rem;
+  max-height: 2.48rem;
+  overflow: hidden;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+.battle-command-grid button strong {
+  font-size: 0.92rem;
+}
+
+.battle-command-grid .meta-text {
+  display: block;
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.target-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 9rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
+}
+
+.target-row {
+  min-height: 2.8rem;
+}
+
+.target-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-log {
+  max-height: 2.7rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.toast-stack {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  display: grid;
+  gap: 0.5rem;
+  width: min(28rem, 92vw);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast-stack > div {
+  padding: 0.6rem 0.75rem;
+  color: #fff3d2;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (min-width: 1040px) {
+  .battle-command-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .world-hud {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+  }
+
+  .party-stack {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .member-card {
+    padding: 0.48rem;
+  }
+
+  .member-role {
+    display: none;
+  }
+
+  .objective-panel {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .feed-panel {
+    display: none;
+  }
+
+  .quick-actions {
+    grid-column: 1;
+    grid-row: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .prompt-chip {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .battle-layout {
+    grid-template-columns: 1fr;
+    gap: 0.42rem;
+    width: 100%;
+  }
+
+  .battle-enemy-panel {
+    display: none;
+  }
+
+  .battle-layer {
+    padding: 0.45rem;
+  }
+
+  .battle-panel {
+    padding: 0.5rem;
+  }
+
+  .battle-party-panel .battle-title {
+    display: none;
+  }
+
+  .battle-party-panel .battle-roster {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .battle-party-panel .combatant-card {
+    min-width: 0;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .battle-party-panel .battle-row {
+    display: block;
+    padding-bottom: 0.22rem;
+  }
+
+  .battle-party-panel .battle-row strong,
+  .battle-party-panel .small-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .battle-party-panel .meta-text {
+    display: none;
+  }
+
+  .battle-party-panel .bar {
+    height: 0.42rem;
+  }
+
+  .battle-title {
+    margin-bottom: 0.42rem;
+    font-size: 1rem;
+  }
+
+  .battle-command-grid {
+    max-height: 12.6rem;
+    overflow-y: auto;
+    gap: 0.35rem;
+    padding-right: 0.25rem;
+  }
+
+  .battle-command-grid button,
+  .target-list button {
+    min-height: 2.35rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .battle-command-grid .meta-text {
+    display: none;
+  }
+
+  .battle-log {
+    max-height: 3.8rem;
+  }
+
+  .journal-grid,
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
