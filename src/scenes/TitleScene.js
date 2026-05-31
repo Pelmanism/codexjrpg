@@ -1,5 +1,5 @@
-import { OverlayUI } from "../ui.js";
-import { hasSave, loadGame, resetState } from "../state.js";
+import { OverlayUI } from "../ui.js?v=map-editor-1";
+import { hasSave, loadGame, resetState } from "../state.js?v=map-editor-1";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -7,6 +7,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    document.body.classList.remove("battle-mode");
+    this.scale.refresh();
     this.ui = new OverlayUI(document.getElementById("hud-root"));
     this.drawBackdrop();
     this.ui.showTitle({

@@ -1,6 +1,6 @@
-import { CombatEngine } from "../systems.js";
-import { state } from "../state.js";
-import { OverlayUI } from "../ui.js";
+import { CombatEngine } from "../systems.js?v=map-editor-1";
+import { state } from "../state.js?v=map-editor-1";
+import { OverlayUI } from "../ui.js?v=map-editor-1";
 
 export class BattleScene extends Phaser.Scene {
   constructor() {
@@ -12,6 +12,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create() {
+    document.body.classList.add("battle-mode");
+    this.scale.refresh();
     this.ui = new OverlayUI(document.getElementById("hud-root"));
     this.engine = new CombatEngine(state, this.encounterId);
     this.sprites = new Map();
@@ -20,6 +22,10 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.fadeIn(260, 0, 0, 0);
     this.render();
     this.maybeEnemyTurn();
+    this.events.once("shutdown", () => {
+      document.body.classList.remove("battle-mode");
+      this.scale.refresh();
+    });
   }
 
   drawArena() {
@@ -49,7 +55,7 @@ export class BattleScene extends Phaser.Scene {
   createUnits() {
     const { width, height } = this.scale;
     this.engine.party.forEach((unit, index) => {
-      const sprite = this.add.sprite(160, height * 0.44 + index * 82, "hero").setScale(1.55).setDepth(20);
+      const sprite = this.add.sprite(160, height * 0.44 + index * 82, unit.texture || "hero").setScale(1.55).setDepth(20);
       this.sprites.set(unit.uid, sprite);
     });
     this.engine.enemies.forEach((unit, index) => {

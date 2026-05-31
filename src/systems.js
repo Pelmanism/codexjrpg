@@ -7,7 +7,8 @@ import {
   QUESTS,
   TILE_SIZE,
   WORLD
-} from "./data.js";
+} from "./data.js?v=map-editor-1";
+import { applyMapOverride } from "./mapOverrides.js?v=map-editor-1";
 import {
   addJournal,
   addLog,
@@ -19,7 +20,7 @@ import {
   spendItem,
   state,
   unlockCodex
-} from "./state.js";
+} from "./state.js?v=map-editor-1";
 
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -37,7 +38,7 @@ function inRect(x, y, rect) {
   return x >= rect.x && y >= rect.y && x < rect.x + rect.w && y < rect.y + rect.h;
 }
 
-export function terrainAt(x, y) {
+function baseTerrainAt(x, y) {
   if (x < 0 || y < 0 || x >= WORLD.width || y >= WORLD.height) {
     return { id: "void", label: "Void", blocked: true, encounter: 0 };
   }
@@ -48,6 +49,10 @@ export function terrainAt(x, y) {
 
   if (WORLD.blockedRects.some((rect) => inRect(x, y, rect))) {
     return { id: "ridge", label: "Ridge", blocked: true, encounter: 0 };
+  }
+
+  if (x >= 47 && x <= 57 && y >= 7 && y <= 16) {
+    return { id: "sanctuary", label: "Dawn Observatory", blocked: false, encounter: 0 };
   }
 
   if (x >= 12 && x <= 20 && y >= 10 && y <= 18) {
@@ -62,8 +67,12 @@ export function terrainAt(x, y) {
     return { id: "ruins", label: "Observatory Ruin", blocked: false, encounter: 0.16 };
   }
 
-  if ((y === 20 && x >= 8 && x <= 29) || (x === 30 && y >= 12 && y <= 20) || (y === 12 && x >= 30 && x <= 41)) {
+  if ((y === 20 && x >= 8 && x <= 29) || (x === 30 && y >= 12 && y <= 20) || (y === 12 && x >= 30 && x <= 48) || (y === 11 && x >= 41 && x <= 50)) {
     return { id: "road", label: "Old Mirror Road", blocked: false, encounter: 0.03 };
+  }
+
+  if (x >= 46) {
+    return { id: "ridge", label: "Mirror Ridge", blocked: true, encounter: 0 };
   }
 
   if (x > 33 && y > 19) {
@@ -73,11 +82,18 @@ export function terrainAt(x, y) {
   return { id: "field", label: "Windfield", blocked: false, encounter: 0.05 };
 }
 
+export function terrainAt(x, y) {
+  const terrain = baseTerrainAt(x, y);
+  if (terrain.id === "void") return terrain;
+  return applyMapOverride(x, y, terrain);
+}
+
 export function regionForTile(x, y) {
   const terrain = terrainAt(x, y).id;
   if (terrain === "forest") return "forest";
   if (terrain === "mire") return "mire";
   if (terrain === "ruins" || terrain === "scar") return "ruins";
+  if (terrain === "sanctuary") return "sanctuary";
   if (terrain === "village") return "village";
   return "field";
 }
@@ -155,6 +171,7 @@ export function resolveInteraction(target) {
     patchState(() => {
       harvestNode(target.data);
       unlockCodex("echoes");
+      if (target.data.shard === "dawn") unlockCodex("dawn");
     });
     return {
       kind: "dialogue",
@@ -164,6 +181,26 @@ export function resolveInteraction(target) {
   }
 
   if (target.type === "gate") {
+    if (target.data.returnGate) {
+      return {
+        kind: "travel",
+        destination: target.data.destination,
+        text: "The return gate folds you back to the old road.",
+        stage: state.quests.main.stage
+      };
+    }
+
+    if (state.flags.bossDefeated) {
+      return {
+        kind: "travel",
+        destination: target.data.destination || WORLD.postBossStart,
+        text: "The Mirror Gate opens onto the Dawn Observatory.",
+        stage: Math.max(state.quests.main.stage, 6),
+        codex: "dawn",
+        journal: "Beyond the Mirror Gate, the party found the Dawn Observatory: a quiet chamber where the Regent's oath no longer commanded the town."
+      };
+    }
+
     if (state.quests.main.stage >= 4) {
       return {
         kind: "battle",
@@ -191,6 +228,7 @@ function talkToNpc(npc) {
     }
     if (npc.id === "scout") unlockCodex("mire");
     if (npc.id === "oracle") unlockCodex("regent");
+    if (npc.id === "dawn_attendant" || npc.id === "bellwether") unlockCodex("dawn");
     if (npc.id === "blacksmith" && draft.flags.harvestedNodes.length >= 2 && !draft.flags.smithTuned) {
       draft.flags.smithTuned = true;
       draft.quests.smith.stage = 2;
@@ -239,7 +277,7 @@ function makeCombatant(base, side, index) {
     resist: base.resist || [],
     abilities: base.abilities || ["attack"],
     skills: base.skills || ["attack"],
-    texture: base.texture,
+    texture: base.texture || (side === "party" ? `hero-${base.id}` : undefined),
     xp: base.xp || 0,
     drops: base.drops || [],
     boss: Boolean(base.boss),
@@ -401,13 +439,20 @@ export class CombatEngine {
           ...ENEMY_SKILLS[skillId]
         };
     const target = this.chooseEnemyTarget(actor);
+    if (!target) return [];
     return this.submit({ type: "ability", abilityId: descriptor.id, targetId: target.uid, descriptor });
   }
 
   chooseEnemyTarget(actor) {
-    const provoker = this.livingParty().find((unit) => this.hasStatus(unit, "guard"));
-    if (provoker && Math.random() < 0.62) return provoker;
-    return this.livingParty().sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    const party = this.livingParty();
+    if (!party.length) return null;
+
+    const guarded = party.filter((unit) => this.hasStatus(unit, "guard"));
+    if (guarded.length && Math.random() < 0.72) {
+      return guarded[Math.floor(Math.random() * guarded.length)];
+    }
+
+    return party[Math.floor(Math.random() * party.length)];
   }
 
   resolveTargetList(actor, descriptor, targetId) {
@@ -578,8 +623,16 @@ export class CombatEngine {
 
       if (this.encounterId === "mirror_regent") {
         draft.flags.bossDefeated = true;
-        draft.quests.main.stage = 5;
+        draft.flags.visitedSanctuary = true;
+        draft.quests.main.stage = Math.max(draft.quests.main.stage, 6);
+        draft.world.x = WORLD.postBossStart.x;
+        draft.world.y = WORLD.postBossStart.y;
+        draft.world.region = "sanctuary";
+        draft.world.lastSafe = { ...WORLD.postBossStart };
+        draft.world.encounterGrace = 8;
+        unlockCodex("dawn");
         addJournal("The Mirror Regent shattered at sunrise. For the first time in a century, Asterfall heard its own bell instead of an old oath.");
+        addJournal("Beyond the Mirror Gate, the party found the Dawn Observatory: a quiet chamber where the Regent's oath no longer commanded the town.");
       }
       addLog(`Victory. ${xp} XP gained.`);
     });

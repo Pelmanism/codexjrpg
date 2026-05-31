@@ -1,4 +1,4 @@
-import { TILE_SIZE, WORLD } from "../data.js";
+import { TILE_SIZE, WORLD } from "../data.js?v=map-editor-1";
 import {
   gridToWorld,
   interactableAt,
@@ -7,16 +7,28 @@ import {
   regionForTile,
   resolveInteraction,
   terrainAt
-} from "../systems.js";
+} from "../systems.js?v=map-editor-1";
 import {
+  addJournal,
   addLog,
   loadGame,
   patchState,
   saveGame,
   state,
-  subscribe
-} from "../state.js";
-import { OverlayUI } from "../ui.js";
+  subscribe,
+  unlockCodex
+} from "../state.js?v=map-editor-1";
+import {
+  clearMapOverride,
+  exportMapOverrides,
+  getMapOverride,
+  getMapOverrides,
+  importMapOverrides,
+  resetMapOverrides,
+  setMapOverride,
+  terrainTool
+} from "../mapOverrides.js?v=map-editor-1";
+import { OverlayUI } from "../ui.js?v=map-editor-1";
 
 const DIRS = {
   ArrowUp: { x: 0, y: -1 },
@@ -34,9 +46,13 @@ export class WorldScene extends Phaser.Scene {
     super("WorldScene");
     this.facing = { x: 0, y: 1 };
     this.busy = false;
+    this.mapBrush = { type: "terrain", value: "ridge", label: "Ridge" };
+    this.mapTransferText = "";
   }
 
   create() {
+    document.body.classList.remove("battle-mode");
+    this.scale.refresh();
     this.ui = new OverlayUI(document.getElementById("hud-root"));
     this.busy = false;
     this.facing = { x: 0, y: 1 };
@@ -58,21 +74,24 @@ export class WorldScene extends Phaser.Scene {
   }
 
   drawMap() {
+    this.mapLayer?.destroy(true);
+    this.mapLayer = this.add.container(0, 0).setDepth(0);
     for (let y = 0; y < WORLD.height; y += 1) {
       for (let x = 0; x < WORLD.width; x += 1) {
         const terrain = terrainAt(x, y);
         const texture = `tile-${terrain.id === "void" ? "ridge" : terrain.id}`;
         const pos = gridToWorld(x, y);
-        this.add.image(pos.x, pos.y, this.textures.exists(texture) ? texture : "tile-field").setDepth(0);
+        this.mapLayer.add(this.add.image(pos.x, pos.y, this.textures.exists(texture) ? texture : "tile-field"));
       }
     }
 
-    const g = this.add.graphics().setDepth(2);
+    const g = this.add.graphics();
     WORLD.safeTiles.forEach((tile) => {
       const pos = gridToWorld(tile.x, tile.y);
       g.lineStyle(2, 0xd9b86f, 0.45);
       g.strokeCircle(pos.x, pos.y, 12);
     });
+    this.mapLayer.add(g);
   }
 
   drawObjects() {
@@ -199,10 +218,12 @@ export class WorldScene extends Phaser.Scene {
       this.ui.toast(result.text);
       this.startBattle(result.group);
     }
+    if (result.kind === "travel") this.travel(result);
     if (result.kind === "toast") this.ui.toast(result.text);
   }
 
   maybeEncounter() {
+    if (state.flags.encountersDisabled) return;
     const terrain = terrainAt(state.world.x, state.world.y);
     if (!terrain.encounter || state.world.encounterGrace > 0) return;
     if (Math.random() < terrain.encounter) {
@@ -223,6 +244,32 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  travel(result) {
+    this.busy = true;
+    this.cameras.main.fadeOut(180, 0, 0, 0);
+    this.time.delayedCall(210, () => {
+      const destination = result.destination;
+      patchState((draft) => {
+        draft.world.x = destination.x;
+        draft.world.y = destination.y;
+        draft.world.region = regionForTile(destination.x, destination.y);
+        draft.world.lastSafe = { x: destination.x, y: destination.y };
+        draft.world.encounterGrace = 8;
+        if (result.stage) draft.quests.main.stage = Math.max(draft.quests.main.stage, result.stage);
+        if (result.codex === "dawn") draft.flags.visitedSanctuary = true;
+      });
+      if (result.codex) unlockCodex(result.codex);
+      if (result.journal) addJournal(result.journal);
+      addLog(result.text);
+      const pos = gridToWorld(destination.x, destination.y);
+      this.player.setPosition(pos.x, pos.y);
+      this.cameras.main.fadeIn(220, 0, 0, 0);
+      this.refreshHud();
+      this.ui.toast(result.text);
+      this.busy = false;
+    });
+  }
+
   refreshHud() {
     const target = nearbyInteractable(state.world.x, state.world.y, this.facing, state);
     const prompt = target ? this.promptFor(target) : `${terrainAt(state.world.x, state.world.y).label} | Space/E interact`;
@@ -240,7 +287,9 @@ export class WorldScene extends Phaser.Scene {
         this.player.setPosition(pos.x, pos.y);
         this.drawObjects();
         this.ui.toast("Loaded.");
-      }
+      },
+      mapEditor: () => this.openMapEditor(),
+      debugEncounters: () => this.toggleEncounters()
     });
   }
 
@@ -248,7 +297,9 @@ export class WorldScene extends Phaser.Scene {
     if (target.type === "npc") return `Talk: ${target.data.name}`;
     if (target.type === "chest") return "Open cache";
     if (target.type === "node") return `Tune: ${target.data.label}`;
-    if (target.type === "gate") return state.quests.main.stage >= 4 ? "Enter the Mirror Gate" : "Mirror Gate sealed";
+    if (target.type === "gate" && target.data.returnGate) return "Return to the Mirror Road";
+    if (target.type === "gate" && state.flags.bossDefeated) return "Cross to the Dawn Observatory";
+    if (target.type === "gate") return state.quests.main.stage >= 4 ? "Challenge the Mirror Regent" : "Mirror Gate sealed";
     return "Interact";
   }
 
@@ -268,6 +319,110 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  toggleEncounters() {
+    const disabled = !state.flags.encountersDisabled;
+    patchState((draft) => {
+      draft.flags.encountersDisabled = disabled;
+      if (disabled) draft.world.encounterGrace = Math.max(draft.world.encounterGrace, 3);
+    });
+    addLog(`Debug: random encounters ${disabled ? "disabled" : "enabled"}.`);
+    this.refreshHud();
+    this.ui.toast(`Random encounters ${disabled ? "off" : "on"}.`);
+  }
+
+  openMapEditor() {
+    this.busy = true;
+    this.renderMapEditor();
+  }
+
+  renderMapEditor() {
+    this.ui.showMapEditor(this.buildMapEditorState(), {
+      setBrush: (type, value) => {
+        if (type === "terrain") {
+          const terrain = terrainTool(value);
+          this.mapBrush = { type, value: terrain.id, label: terrain.label };
+        } else if (type === "block") {
+          const blocked = value === "true";
+          this.mapBrush = { type, value: blocked, label: blocked ? "Block" : "Open" };
+        } else {
+          this.mapBrush = { type: "erase", value: "", label: "Erase" };
+        }
+        this.renderMapEditor();
+      },
+      paint: (x, y) => {
+        if (this.mapBrush.type === "terrain") setMapOverride(x, y, { terrain: this.mapBrush.value });
+        if (this.mapBrush.type === "block") setMapOverride(x, y, { blocked: this.mapBrush.value });
+        if (this.mapBrush.type === "erase") clearMapOverride(x, y);
+        this.drawMap();
+        this.renderMapEditor();
+      },
+      export: (field) => {
+        this.mapTransferText = exportMapOverrides();
+        if (field) field.value = this.mapTransferText;
+      },
+      import: (text) => {
+        try {
+          const count = importMapOverrides(text);
+          this.mapTransferText = exportMapOverrides();
+          this.drawMap();
+          this.renderMapEditor();
+          this.ui.toast(`Imported ${count} map overrides.`);
+        } catch {
+          this.ui.toast("Map import failed.");
+        }
+      },
+      reset: () => {
+        resetMapOverrides();
+        this.mapTransferText = "";
+        this.drawMap();
+        this.renderMapEditor();
+        this.ui.toast("Map overrides reset.");
+      },
+      close: () => {
+        this.busy = false;
+        this.refreshHud();
+      }
+    });
+  }
+
+  buildMapEditorState() {
+    const overrides = getMapOverrides();
+    const tiles = [];
+    for (let y = 0; y < WORLD.height; y += 1) {
+      for (let x = 0; x < WORLD.width; x += 1) {
+        const terrain = terrainAt(x, y);
+        tiles.push({
+          x,
+          y,
+          terrain: terrain.id,
+          label: terrain.label,
+          blocked: terrain.blocked,
+          override: Boolean(getMapOverride(x, y)),
+          current: state.world.x === x && state.world.y === y,
+          marker: this.mapMarkerAt(x, y)
+        });
+      }
+    }
+    return {
+      width: WORLD.width,
+      height: WORLD.height,
+      tiles,
+      overrideCount: Object.keys(overrides).length,
+      brush: this.mapBrush,
+      transferText: this.mapTransferText
+    };
+  }
+
+  mapMarkerAt(x, y) {
+    if (state.world.x === x && state.world.y === y) return "P";
+    if (WORLD.gates.some((gate) => gate.x === x && gate.y === y)) return "G";
+    if (WORLD.npcs.some((npc) => npc.x === x && npc.y === y)) return "N";
+    if (WORLD.chests.some((chest) => chest.x === x && chest.y === y && !state.flags.openedChests.includes(chest.id))) return "C";
+    if (WORLD.nodes.some((node) => node.x === x && node.y === y && !state.flags.harvestedNodes.includes(node.id))) return "E";
+    if (WORLD.safeTiles.some((tile) => tile.x === x && tile.y === y)) return "S";
+    return "";
+  }
+
   openMenu() {
     this.busy = true;
     this.ui.showMenu(() => {
@@ -283,6 +438,11 @@ export class WorldScene extends Phaser.Scene {
       load: () => {
         loadGame();
         this.scene.restart();
+      },
+      mapEditor: () => this.openMapEditor(),
+      debugEncounters: () => {
+        this.toggleEncounters();
+        this.busy = false;
       }
     });
   }

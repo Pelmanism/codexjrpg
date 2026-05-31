@@ -21,6 +21,8 @@ The game uses Phaser from a pinned CDN script because Node/npm are not available
 - Top-down tile exploration with camera follow, collision, NPCs, caches, echo nodes, and a boss gate.
 - Quest progression, journal, codex, inventory, save/load, party stats, and field log.
 - Turn-based party combat with AP costs, limit meter, elemental weakness/resistance, status effects, guard, items, XP, level-ups, drops, victory, and defeat recovery.
+- Post-boss Mirror Gate route into the Dawn Observatory, with epilogue NPCs, a Dawn Echo, return travel, and codex/journal progression.
+- In-game map editor for local terrain/collision overrides, with export/import and reset tools for debugging layout issues.
 - DOM HUD and command menus layered over a Phaser canvas.
 - Procedural pixel-style textures generated at boot, so no external art files are required beyond Phaser.
 

@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  --battle-ui-reserve: clamp(15rem, 28vh, 17.5rem);
   --ink: #f5f0dc;
   --muted: #b8b19c;
   --panel: rgba(19, 22, 25, 0.86);
@@ -83,6 +84,17 @@ button:disabled {
   display: block;
   margin: auto;
   image-rendering: pixelated;
+}
+
+body.battle-mode #game-root {
+  bottom: var(--battle-ui-reserve);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+body.battle-mode #game-root canvas {
+  margin: 0 !important;
 }
 
 #hud-root {
@@ -280,6 +292,16 @@ button:disabled {
   padding: 0.5rem 0.65rem;
 }
 
+.debug-toggle {
+  white-space: nowrap;
+}
+
+.debug-toggle.active {
+  border-color: rgba(105, 199, 192, 0.72);
+  background: rgba(105, 199, 192, 0.14);
+  color: #d6fffb;
+}
+
 .feed-panel {
   grid-column: 1;
   grid-row: 3;
@@ -313,7 +335,8 @@ button:disabled {
 
 .dialogue-layer,
 .pause-layer,
-.battle-layer {
+.battle-layer,
+.map-editor-layer {
   position: absolute;
   inset: 0;
   display: grid;
@@ -324,6 +347,12 @@ button:disabled {
 .pause-layer {
   place-items: center;
   background: rgba(0, 0, 0, 0.32);
+}
+
+.map-editor-layer {
+  place-items: center;
+  background: rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
 }
 
 .dialogue-panel {
@@ -371,6 +400,187 @@ button:disabled {
   gap: 0.6rem;
 }
 
+.map-editor-panel {
+  width: min(78rem, calc(100vw - 1.25rem));
+  height: min(48rem, calc(100vh - 1.25rem));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(12, 14, 17, 0.96);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.56);
+  backdrop-filter: blur(14px);
+}
+
+.map-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.map-editor-header h2 {
+  margin: 0 0 0.2rem;
+  color: #fff4cf;
+  font-size: 1.08rem;
+}
+
+.map-editor-actions,
+.tool-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.map-editor-actions button,
+.tool-grid button {
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+}
+
+.tool-grid button.active {
+  border-color: rgba(217, 184, 111, 0.82);
+  background: rgba(217, 184, 111, 0.16);
+  color: #fff4cf;
+}
+
+.map-editor-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr);
+}
+
+.map-editor-tools {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem;
+  border-right: 1px solid var(--line);
+}
+
+.tool-group + .tool-group {
+  margin-top: 0.9rem;
+}
+
+.tool-title {
+  margin-bottom: 0.42rem;
+  color: #fff4cf;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.map-editor-tools textarea {
+  width: 100%;
+  min-height: 11rem;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.55rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.map-grid-shell {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 1rem 1rem;
+}
+
+.map-grid {
+  display: grid;
+  width: max-content;
+  gap: 1px;
+}
+
+.map-cell {
+  position: relative;
+  width: 1rem;
+  min-width: 1rem;
+  height: 1rem;
+  min-height: 1rem;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #fff6d6;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 900;
+  line-height: 1rem;
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+}
+
+.map-cell:hover {
+  outline: 2px solid #fff4cf;
+  outline-offset: 0;
+  transform: none;
+}
+
+.map-cell.override {
+  box-shadow: inset 0 0 0 2px rgba(217, 184, 111, 0.9);
+}
+
+.map-cell.current {
+  box-shadow: inset 0 0 0 2px rgba(208, 109, 127, 0.95);
+}
+
+.map-cell.blocked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.55) 0 2px, transparent 2px 5px);
+  pointer-events: none;
+}
+
+.map-cell.terrain-field {
+  background: #455d45;
+}
+
+.map-cell.terrain-road {
+  background: #615f5b;
+}
+
+.map-cell.terrain-village {
+  background: #6b5847;
+}
+
+.map-cell.terrain-forest {
+  background: #1f5a52;
+}
+
+.map-cell.terrain-mire {
+  background: #33453f;
+}
+
+.map-cell.terrain-ruins {
+  background: #3c3f4a;
+}
+
+.map-cell.terrain-scar {
+  background: #4a303d;
+}
+
+.map-cell.terrain-sanctuary {
+  background: #5f6f7a;
+}
+
+.map-cell.terrain-ridge,
+.map-cell.terrain-void {
+  background: #1b2024;
+}
+
 .journal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -393,6 +603,7 @@ button:disabled {
 .battle-layer {
   place-items: stretch;
   grid-template-rows: 1fr auto;
+  padding-top: 0;
   pointer-events: none;
 }
 
@@ -465,6 +676,28 @@ button:disabled {
   border-bottom: 0;
 }
 
+.battle-resource-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0 0 0.24rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.battle-resource-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-resource-row strong {
+  color: #fff4cf;
+  font-size: 0.66rem;
+}
+
 .battle-row {
   padding: 0 0 0.28rem;
 }
@@ -483,12 +716,26 @@ button:disabled {
   min-height: 2.28rem;
   max-height: 2.48rem;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.45rem;
   padding: 0.35rem 0.5rem;
   text-align: left;
 }
 
 .battle-command-grid button strong {
-  font-size: 0.92rem;
+  overflow: hidden;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-meta {
+  min-width: fit-content;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 .battle-command-grid .meta-text {
@@ -524,6 +771,27 @@ button:disabled {
   padding-right: 0.25rem;
 }
 
+.battle-tooltip {
+  position: fixed;
+  z-index: 20;
+  max-width: min(22rem, calc(100vw - 1.25rem));
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(217, 184, 111, 0.58);
+  border-radius: 8px;
+  background: rgba(12, 14, 17, 0.96);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.48);
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.34;
+  opacity: 0;
+  pointer-events: none;
+  white-space: pre-line;
+}
+
+.battle-tooltip.visible {
+  opacity: 1;
+}
+
 .toast-stack {
   position: absolute;
   top: 1rem;
@@ -551,6 +819,10 @@ button:disabled {
 }
 
 @media (max-width: 860px) {
+  :root {
+    --battle-ui-reserve: clamp(18rem, 36vh, 20rem);
+  }
+
   .world-hud {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto auto;
@@ -582,7 +854,16 @@ button:disabled {
   .quick-actions {
     grid-column: 1;
     grid-row: 4;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quick-actions button {
+    min-height: 2.15rem;
+    padding-inline: 0.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
   }
 
   .prompt-chip {
@@ -640,6 +921,13 @@ button:disabled {
     display: none;
   }
 
+  .battle-resource-row {
+    grid-template-columns: 1fr;
+    gap: 0.12rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.66rem;
+  }
+
   .battle-party-panel .bar {
     height: 0.42rem;
   }
@@ -673,6 +961,21 @@ button:disabled {
   .journal-grid,
   .menu-grid {
     grid-template-columns: 1fr;
+  }
+
+  .map-editor-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .map-editor-tools {
+    max-height: 15rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .map-editor-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

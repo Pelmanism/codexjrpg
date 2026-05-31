@@ -1,4 +1,4 @@
-import { CODEX, ITEMS, PARTY, QUESTS, WORLD } from "./data.js";
+import { CODEX, ITEMS, PARTY, QUESTS, WORLD } from "./data.js?v=map-editor-1";
 
 const SAVE_KEY = "asterfall-echoes-save-v1";
 const listeners = new Set();
@@ -23,6 +23,7 @@ function initialParty() {
     defense: member.defense,
     speed: member.speed,
     element: member.element,
+    texture: member.texture,
     abilities: [...member.abilities],
     limit: 0
   }));
@@ -55,7 +56,9 @@ export function createInitialState() {
       codex: ["village"],
       talked: [],
       smithTuned: false,
-      bossDefeated: false
+      bossDefeated: false,
+      visitedSanctuary: false,
+      encountersDisabled: false
     },
     journal: [
       "Lyra, Bram, and Sera reached Asterfall at dusk. The observatory bell rang without a hand."
@@ -134,6 +137,10 @@ export function harvestNode(node) {
   addLog(`${node.label} harvested.`);
   if (node.shard === "verdant") unlockAbility("lyra", "lumen_chorus");
   if (node.shard === "mire") unlockAbility("bram", "bulwark");
+  if (node.shard === "dawn") {
+    state.quests.main.stage = Math.max(state.quests.main.stage, 7);
+    unlockCodex("dawn");
+  }
   advanceMainQuest();
   return true;
 }

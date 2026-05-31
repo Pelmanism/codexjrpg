@@ -1,19 +1,24 @@
 export const TILE_SIZE = 32;
 
 export const WORLD = {
-  width: 46,
+  width: 60,
   height: 34,
   start: { x: 6, y: 24 },
+  postBossStart: { x: 50, y: 11 },
+  mirrorReturn: { x: 40, y: 11 },
   safeTiles: [
     { x: 6, y: 24 },
     { x: 12, y: 20 },
-    { x: 27, y: 14 }
+    { x: 27, y: 14 },
+    { x: 50, y: 11 }
   ],
   blockedRects: [
-    { x: 0, y: 0, w: 46, h: 1 },
-    { x: 0, y: 33, w: 46, h: 1 },
+    { x: 0, y: 0, w: 60, h: 1 },
+    { x: 0, y: 33, w: 60, h: 1 },
     { x: 0, y: 0, w: 1, h: 34 },
-    { x: 45, y: 0, w: 1, h: 34 },
+    { x: 59, y: 0, w: 1, h: 34 },
+    { x: 45, y: 0, w: 1, h: 10 },
+    { x: 45, y: 13, w: 1, h: 21 },
     { x: 2, y: 2, w: 8, h: 4 },
     { x: 15, y: 2, w: 4, h: 8 },
     { x: 31, y: 1, w: 2, h: 10 },
@@ -69,20 +74,47 @@ export const WORLD = {
         "The Mirror Regent is not a king. It is every oath the city failed to keep.",
         "Carry mercy and fire. One opens the gate. The other survives it."
       ]
+    },
+    {
+      id: "dawn_attendant",
+      name: "Dawn Attendant",
+      x: 53,
+      y: 10,
+      texture: "npc-dawn",
+      role: "Epilogue",
+      lines: [
+        "You are not dead. This is the part of Asterfall the mirror kept for itself.",
+        "Take the Dawn Echo back with you. Let the town remember forward, not backward."
+      ]
+    },
+    {
+      id: "bellwether",
+      name: "Bellwether Nox",
+      x: 55,
+      y: 14,
+      texture: "npc-bell",
+      role: "Lore",
+      lines: [
+        "Every oath leaves an afterimage. This place is where Asterfall's broken vows learned to sleep.",
+        "When you return, the bell will ring once for the living and once for those finally released."
+      ]
     }
   ],
   chests: [
     { id: "village-cache", x: 10, y: 21, item: "salve", amount: 3 },
     { id: "mire-lockbox", x: 24, y: 12, item: "ether", amount: 2 },
-    { id: "ruin-reliquary", x: 38, y: 8, item: "star_bomb", amount: 1 }
+    { id: "ruin-reliquary", x: 38, y: 8, item: "star_bomb", amount: 1 },
+    { id: "dawn-reliquary", x: 56, y: 9, item: "ether", amount: 3 }
   ],
   nodes: [
     { id: "forest-echo", x: 14, y: 14, shard: "verdant", label: "Verdant Echo" },
     { id: "mire-echo", x: 27, y: 19, shard: "mire", label: "Mire Echo" },
-    { id: "ruin-echo", x: 38, y: 13, shard: "glass", label: "Glass Echo" }
+    { id: "ruin-echo", x: 38, y: 13, shard: "glass", label: "Glass Echo" },
+    { id: "dawn-echo", x: 52, y: 8, shard: "dawn", label: "Dawn Echo" }
   ],
   gates: [
-    { id: "mirror-gate", x: 41, y: 11, battle: "mirror_regent" }
+    { id: "mirror-gate", x: 41, y: 11, battle: "mirror_regent", destination: { x: 50, y: 11 } },
+    { id: "dawn-return", x: 48, y: 11, destination: { x: 40, y: 11 }, returnGate: true }
   ]
 };
 
@@ -98,6 +130,7 @@ export const PARTY = [
     defense: 7,
     speed: 13,
     element: "aether",
+    texture: "hero-lyra",
     abilities: ["spark", "mend"]
   },
   {
@@ -111,6 +144,7 @@ export const PARTY = [
     defense: 12,
     speed: 8,
     element: "iron",
+    texture: "hero-bram",
     abilities: ["fracture", "provoke"]
   },
   {
@@ -124,6 +158,7 @@ export const PARTY = [
     defense: 6,
     speed: 16,
     element: "mire",
+    texture: "hero-sera",
     abilities: ["venom_lace", "analyze", "quickstep"]
   }
 ];
@@ -414,7 +449,9 @@ export const QUESTS = {
       "Harvest the Mire Echo along the sunken road.",
       "Harvest the Glass Echo near the observatory ruin.",
       "Challenge the Mirror Regent beyond the eastern gate.",
-      "Asterfall is free of the mirror oath."
+      "Step beyond the opened Mirror Gate.",
+      "Tune the Dawn Echo in the observatory beyond the mirror.",
+      "Return to Asterfall with the Dawn Echo."
     ]
   },
   smith: {
@@ -443,5 +480,9 @@ export const CODEX = {
   regent: {
     title: "Mirror Regent",
     text: "A crown-shaped oath construct. It survives by reflecting guilt back into the living."
+  },
+  dawn: {
+    title: "Dawn Observatory",
+    text: "The quiet chamber beyond the mirror. Here the broken oath became memory instead of command."
   }
 };
