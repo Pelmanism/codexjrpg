@@ -1,6 +1,6 @@
-import { CombatEngine } from "../systems.js?v=map-editor-1";
-import { state } from "../state.js?v=map-editor-1";
-import { OverlayUI } from "../ui.js?v=map-editor-1";
+import { CombatEngine } from "../systems.js?v=baked-map-1";
+import { state } from "../state.js?v=baked-map-1";
+import { OverlayUI } from "../ui.js?v=baked-map-1";
 
 export class BattleScene extends Phaser.Scene {
   constructor() {

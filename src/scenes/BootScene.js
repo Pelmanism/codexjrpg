@@ -1,4 +1,4 @@
-import { TILE_SIZE } from "../data.js?v=map-editor-1";
+import { TILE_SIZE } from "../data.js?v=baked-map-1";
 
 function makeTile(scene, key, colors) {
   const g = scene.make.graphics({ x: 0, y: 0, add: false });

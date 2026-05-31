@@ -1,4 +1,4 @@
-import { CODEX, ITEMS, PARTY, QUESTS, WORLD } from "./data.js?v=map-editor-1";
+import { CODEX, ITEMS, PARTY, QUESTS, WORLD } from "./data.js?v=baked-map-1";
 
 const SAVE_KEY = "asterfall-echoes-save-v1";
 const listeners = new Set();

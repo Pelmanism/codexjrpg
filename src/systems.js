@@ -7,8 +7,8 @@ import {
   QUESTS,
   TILE_SIZE,
   WORLD
-} from "./data.js?v=map-editor-1";
-import { applyMapOverride } from "./mapOverrides.js?v=map-editor-1";
+} from "./data.js?v=baked-map-1";
+import { applyMapOverride } from "./mapOverrides.js?v=baked-map-1";
 import {
   addJournal,
   addLog,
@@ -20,7 +20,7 @@ import {
   spendItem,
   state,
   unlockCodex
-} from "./state.js?v=map-editor-1";
+} from "./state.js?v=baked-map-1";
 
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -49,6 +49,10 @@ function baseTerrainAt(x, y) {
 
   if (WORLD.blockedRects.some((rect) => inRect(x, y, rect))) {
     return { id: "ridge", label: "Ridge", blocked: true, encounter: 0 };
+  }
+
+  if (WORLD.roadRects?.some((rect) => inRect(x, y, rect))) {
+    return { id: "road", label: "Old Mirror Road", blocked: false, encounter: 0.03 };
   }
 
   if (x >= 47 && x <= 57 && y >= 7 && y <= 16) {

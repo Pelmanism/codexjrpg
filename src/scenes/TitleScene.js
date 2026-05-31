@@ -1,5 +1,5 @@
-import { OverlayUI } from "../ui.js?v=map-editor-1";
-import { hasSave, loadGame, resetState } from "../state.js?v=map-editor-1";
+import { OverlayUI } from "../ui.js?v=baked-map-1";
+import { hasSave, loadGame, resetState } from "../state.js?v=baked-map-1";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {

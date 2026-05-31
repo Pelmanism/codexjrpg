@@ -1,6 +1,6 @@
-import { ABILITIES, CODEX, ITEMS, PARTY, QUESTS } from "./data.js?v=map-editor-1";
-import { TERRAIN_TOOLS } from "./mapOverrides.js?v=map-editor-1";
-import { hasSave, objectiveText, state } from "./state.js?v=map-editor-1";
+import { ABILITIES, CODEX, ITEMS, PARTY, QUESTS } from "./data.js?v=baked-map-1";
+import { TERRAIN_TOOLS } from "./mapOverrides.js?v=baked-map-1";
+import { hasSave, objectiveText, state } from "./state.js?v=baked-map-1";
 
 function pct(value, max) {
   if (!max) return 0;

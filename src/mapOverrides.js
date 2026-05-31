@@ -13,6 +13,58 @@ export const TERRAIN_TOOLS = [
 ];
 
 const TERRAIN_BY_ID = Object.fromEntries(TERRAIN_TOOLS.map((tool) => [tool.id, tool]));
+const PROMOTED_OVERRIDES = {
+  "45,10": { blocked: true, terrain: "ridge" },
+  "45,11": { blocked: true, terrain: "ridge" },
+  "45,12": { blocked: true, terrain: "ridge" },
+  "46,12": { blocked: true, terrain: "ridge" },
+  "46,11": { blocked: true, terrain: "ridge" },
+  "33,12": { terrain: "road" },
+  "34,12": { terrain: "road" },
+  "35,12": { terrain: "road" },
+  "36,12": { terrain: "road" },
+  "37,12": { terrain: "road" },
+  "38,12": { terrain: "road" },
+  "39,12": { terrain: "road" },
+  "40,12": { terrain: "road" },
+  "41,12": { terrain: "road" },
+  "42,12": { terrain: "road" },
+  "42,11": { terrain: "road" },
+  "41,11": { terrain: "road" },
+  "39,11": { terrain: "road" },
+  "40,11": { terrain: "road" },
+  "37,11": { terrain: "road" },
+  "36,11": { terrain: "road" },
+  "35,11": { terrain: "road" },
+  "34,11": { terrain: "road" },
+  "33,11": { terrain: "road" },
+  "32,11": { terrain: "road" },
+  "31,11": { terrain: "road" },
+  "30,11": { terrain: "road" },
+  "38,11": { terrain: "road" },
+  "29,11": { terrain: "road" },
+  "28,11": { terrain: "road" },
+  "27,11": { terrain: "road" },
+  "26,11": { terrain: "road" },
+  "26,12": { terrain: "road" },
+  "25,12": { terrain: "road" },
+  "25,11": { terrain: "road" },
+  "28,12": { terrain: "road" },
+  "29,12": { terrain: "road" },
+  "27,12": { terrain: "road" },
+  "25,13": { terrain: "road" },
+  "25,14": { terrain: "road" },
+  "25,15": { terrain: "road" },
+  "25,16": { terrain: "road" },
+  "25,17": { terrain: "road" },
+  "25,18": { terrain: "road" },
+  "25,19": { terrain: "road" },
+  "25,20": { terrain: "road" },
+  "24,20": { terrain: "road" },
+  "23,20": { terrain: "road" },
+  "22,20": { terrain: "road" },
+  "21,20": { terrain: "road" }
+};
 
 let overrides = loadOverrides();
 
@@ -40,6 +92,10 @@ function cleanEntry(entry) {
   return Object.keys(clean).length ? clean : null;
 }
 
+function sameEntry(left, right) {
+  return left?.terrain === right?.terrain && left?.blocked === right?.blocked;
+}
+
 function cleanTiles(tiles) {
   if (!tiles || typeof tiles !== "object") return {};
   return Object.fromEntries(
@@ -47,6 +103,7 @@ function cleanTiles(tiles) {
       .filter(([key]) => validKey(key))
       .map(([key, entry]) => [key, cleanEntry(entry)])
       .filter(([, entry]) => entry)
+      .filter(([key, entry]) => !sameEntry(entry, PROMOTED_OVERRIDES[key]))
   );
 }
 

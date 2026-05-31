@@ -1,4 +1,4 @@
-import { TILE_SIZE, WORLD } from "../data.js?v=map-editor-1";
+import { TILE_SIZE, WORLD } from "../data.js?v=baked-map-1";
 import {
   gridToWorld,
   interactableAt,
@@ -7,7 +7,7 @@ import {
   regionForTile,
   resolveInteraction,
   terrainAt
-} from "../systems.js?v=map-editor-1";
+} from "../systems.js?v=baked-map-1";
 import {
   addJournal,
   addLog,
@@ -17,7 +17,7 @@ import {
   state,
   subscribe,
   unlockCodex
-} from "../state.js?v=map-editor-1";
+} from "../state.js?v=baked-map-1";
 import {
   clearMapOverride,
   exportMapOverrides,
@@ -27,8 +27,8 @@ import {
   resetMapOverrides,
   setMapOverride,
   terrainTool
-} from "../mapOverrides.js?v=map-editor-1";
-import { OverlayUI } from "../ui.js?v=map-editor-1";
+} from "../mapOverrides.js?v=baked-map-1";
+import { OverlayUI } from "../ui.js?v=baked-map-1";
 
 const DIRS = {
   ArrowUp: { x: 0, y: -1 },

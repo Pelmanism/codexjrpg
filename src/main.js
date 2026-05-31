@@ -1,7 +1,7 @@
-import { BootScene } from "./scenes/BootScene.js?v=map-editor-1";
-import { TitleScene } from "./scenes/TitleScene.js?v=map-editor-1";
-import { WorldScene } from "./scenes/WorldScene.js?v=map-editor-1";
-import { BattleScene } from "./scenes/BattleScene.js?v=map-editor-1";
+import { BootScene } from "./scenes/BootScene.js?v=baked-map-1";
+import { TitleScene } from "./scenes/TitleScene.js?v=baked-map-1";
+import { WorldScene } from "./scenes/WorldScene.js?v=baked-map-1";
+import { BattleScene } from "./scenes/BattleScene.js?v=baked-map-1";
 
 const bootError = document.getElementById("boot-error");
 
